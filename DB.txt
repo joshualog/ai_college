@@ -1,0 +1,10 @@
+CREATE TABLE student_score (
+    id bigint auto_increment,
+    name varchar(20),
+    korean int,
+    math int,
+    english int,
+    primary key (id)
+    );
+
+

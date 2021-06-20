@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <title>Score Management System</title>
+    <style>
+        body, div, p {
+            margin: 0px;
+        }
+
+        .background-container {
+            width: 800px;
+            height: 100%;
+            margin-left: calc(50% - 400px);
+        }
+
+        .header-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .input-container {
+            margin-top: 20px;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .btn-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .radio-container {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .list-container {
+            margin-top: 35px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-style {
+            width: 45px;
+            height: 20px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="background-container">
+        <div class="header-container">
+            <h2>학생 점수 관리 시스템</h2>
+            <img src="{{ url_for('static', filename='img.jpeg') }}" style="width: 400px; height: 320px">
+        </div>
+        <div class="input-container">
+            <div>학생이름 : <input type="text" id="scored-name" /></div>
+            <div>국어: <input type="number" min="0" max="100" id="scored-korean"/></div>
+            <div>수학: <input type="number" min="0" max="100" id="scored-math"/></div>
+            <div>영어: <input type="number" min="0" max="100" id="scored-english"/></div>
+        </div>
+        <div class="btn-container">
+            <button class="btn-style" onclick="saveBtnScore()">저장</button>
+            <button class="btn-style" onclick="deleteBtnScore()">삭제</button>
+            <button class="btn-style" onclick="updateBtnScore()">수정</button>
+        </div>
+        <div class="radio-container">
+            국어: <input type="radio" style="margin-left: 5px;" name="btn-radio" value="KO">
+            수학: <input type="radio" style="margin-left: 5px;" name="btn-radio" value="MA">
+            영어: <input type="radio" style="margin-left: 5px;" name="btn-radio" value="EN">
+            <button class="btn-style" style="margin-left: 5px;" onclick="sortBtn()">정렬</button>
+        </div>
+        <div class="list-container">
+            <ul id="student-list"></ul>
+        </div>
+    </div>
+    <script>
+        // 초기화면
+        $.ajax({
+            type: "GET",
+            url: "/students",
+            data: {},
+            success: function(res){
+                for(let i = 0; i < res.length; i ++) {
+                    let student = res[i]
+                    $("#student-list").append(`
+                        <li>
+                            ${student["name"]}, 국어: ${student["korean"]}, 수학: ${student["math"]}, 영어: ${student["english"]}
+                        </li>
+                    `)
+                }
+            }
+        })
+
+        // 저장버튼
+        function saveBtnScore(){
+            const scoredName = $('#scored-name').val();
+            const scoredKorean = $('#scored-korean').val();
+            const scoredMath = $('#scored-math').val();
+            const scoredEnglish = $('#scored-english').val();
+
+            $.ajax({
+                type: "POST",
+                url: "/student",
+                data: {
+                    name: scoredName,
+                    korean: scoredKorean,
+                    math: scoredMath,
+                    english: scoredEnglish
+                },
+                success: function(res){
+                    alert(`**** SAVED ${scoredName}'s score! ****`)
+                    window.location.reload();
+                }
+            })
+        }
+
+        // 삭제버튼
+        function deleteBtnScore(){
+            const scoredName = $('#scored-name').val();
+
+            $.ajax({
+                type: "DELETE",
+                url: "/student?name=" + scoredName,
+                data: {},
+                success: function(res){
+                    alert(`**** DELETED ${scoredName}'s score! ****`)
+                    window.location.reload()
+                }
+            })
+        }
+
+        // 수정버튼
+        function updateBtnScore(){
+            const scoredName = $('#scored-name').val();
+            const scoredKorean = $('#scored-korean').val();
+            const scoredMath = $('#scored-math').val();
+            const scoredEnglish = $('#scored-english').val();
+
+            $.ajax({
+                type: "PUT",
+                url: "/student",
+                data: {
+                    name: scoredName,
+                    korean: scoredKorean,
+                    math: scoredMath,
+                    english: scoredEnglish
+                },
+                success: function(res){
+                    alert(`**** UPDATED ${scoredName}'s score! ****`)
+                    window.location.reload();
+                }
+            })
+        }
+
+        // 정렬버튼
+        function sortBtn(){
+            let radio = $('input:radio[name="btn-radio"]:checked').val()
+            if(radio === 'KO'){
+                $.ajax({
+                    type: "GET",
+                    url: "/students",
+                    data: {},
+                    success: function(res){
+                        $("#student-list").empty()
+                        let arr = res.sort(function(a, b){
+                            return a.korean < b.korean ? 1 : a.korean > b.korean ? -1 : 0
+                        })
+                        for(let i = 0; i < arr.length; i ++) {
+                            let student = arr[i]
+                            $("#student-list").append(`
+                        <li>
+                            ${student["name"]}, 국어: ${student["korean"]}, 수학: ${student["math"]}, 영어: ${student["english"]}
+                        </li>
+                    `)
+                        }
+                    }
+                })
+            } else if (radio === 'MA') {
+               $.ajax({
+                    type: "GET",
+                    url: "/students",
+                    data: {},
+                    success: function(res){
+                        $("#student-list").empty()
+                        let arr = res.sort(function(a, b){
+                            return a['math'] < b['math'] ? 1 : a['math'] > b['math'] ? -1 : 0
+                        })
+                        for(let i = 0; i < arr.length; i ++) {
+                            let student = arr[i]
+                            $("#student-list").append(`
+                        <li>
+                            ${student["name"]}, 국어: ${student["korean"]}, 수학: ${student["math"]}, 영어: ${student["english"]}
+                        </li>
+                    `)
+                        }
+                    }
+                })
+            } else if (radio === 'EN') {
+               $.ajax({
+                    type: "GET",
+                    url: "/students",
+                    data: {},
+                    success: function(res){
+                        $("#student-list").empty()
+                        let arr = res.sort(function(a, b){
+                            return a['english'] < b['english'] ? 1 : a['english'] > b['english'] ? -1 : 0
+                        })
+                        for(let i = 0; i < arr.length; i ++) {
+                            let student = arr[i]
+                            $("#student-list").append(`
+                        <li>
+                            ${student["name"]}, 국어: ${student["korean"]}, 수학: ${student["math"]}, 영어: ${student["english"]}
+                        </li>
+                    `)
+                        }
+                    }
+                })
+            }
+        }
+    </script>
+</body>
+</html>
